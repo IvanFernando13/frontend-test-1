@@ -5,24 +5,27 @@ import Link from "next/link";
 export default function Header() {
   const [isVisible, setIsVisible] = useState(true);
   const [isTop, setIsTop] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+      
       setIsTop(currentScrollY < 50);
       
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setIsVisible(false); // Scroll down
-      } else {
-        setIsVisible(true);  // Scroll up
+      if (currentScrollY > 50 && currentScrollY > lastScrollY) {
+        setIsVisible(false); 
+      } else if (currentScrollY < lastScrollY) {
+        setIsVisible(true);  
       }
-      setLastScrollY(currentScrollY);
+      
+      lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   return (
     <header

@@ -8,7 +8,6 @@ export default function IdeasPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // State inisial diambil dari URL atau default
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
   const [size, setSize] = useState(Number(searchParams.get("size")) || 10);
   const [sort, setSort] = useState(searchParams.get("sort") || "-published_at");
@@ -17,7 +16,6 @@ export default function IdeasPage() {
   const [meta, setMeta] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Update URL parameters saat state berubah
   useEffect(() => {
     const params = new URLSearchParams();
     params.set("page", page.toString());
@@ -35,10 +33,15 @@ export default function IdeasPage() {
         `/api/ideas?page[number]=${p}&page[size]=${s}&append[]=small_image&append[]=medium_image&sort=${order}`
       );
       const json = await res.json();
-      setData(json.data);
-      setMeta(json.meta);
+      
+      if (json && json.data) {
+        setData(json.data);
+        setMeta(json.meta);
+      } else {
+        setData([]);
+      }
     } catch (error) {
-      console.error("Failed to fetch ideas", error);
+      setData([]);
     }
     setLoading(false);
   };
@@ -49,66 +52,76 @@ export default function IdeasPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20">
+    <main className="min-h-screen bg-white pb-20">
       <Header />
       <Banner />
 
-      <div className="container mx-auto px-6 mt-10">
-        {/* Controls */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-          <p className="text-sm text-gray-600 mb-4 md:mb-0">
-            Showing {meta ? `${meta.from} - ${meta.to} of ${meta.total}` : "..."}
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 mt-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 text-[#4a4a4a]">
+          <p className="text-sm font-medium mb-4 sm:mb-0">
+            Showing {meta ? `${meta.from} - ${meta.to} of ${meta.total}` : "0 - 0 of 0"}
           </p>
-          <div className="flex space-x-4">
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600">Show per page:</label>
-              <select
-                className="border rounded px-3 py-1 text-sm bg-white"
-                value={size}
-                onChange={(e) => {
-                  setSize(Number(e.target.value));
-                  setPage(1); // Reset page saat merubah size
-                }}
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
+          <div className="flex flex-wrap items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center space-x-3">
+              <label className="text-sm">Show per page:</label>
+              <div className="relative">
+                <select
+                  className="appearance-none border border-gray-300 rounded-full pl-4 pr-10 py-1.5 text-sm bg-white focus:outline-none min-w-[80px]"
+                  value={size}
+                  onChange={(e) => {
+                    setSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                  <svg className="fill-current h-4 w-4" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600">Sort by:</label>
-              <select
-                className="border rounded px-3 py-1 text-sm bg-white"
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-              >
-                <option value="-published_at">Newest</option>
-                <option value="published_at">Oldest</option>
-              </select>
+            <div className="flex items-center space-x-3">
+              <label className="text-sm">Sort by:</label>
+              <div className="relative">
+                <select
+                  className="appearance-none border border-gray-300 rounded-full pl-4 pr-10 py-1.5 text-sm bg-white focus:outline-none min-w-[120px]"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                >
+                  <option value="-published_at">Newest</option>
+                  <option value="published_at">Oldest</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                  <svg className="fill-current h-4 w-4" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* List Post Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {loading ? (
-             <p className="col-span-full text-center">Loading...</p>
+             <div className="col-span-full py-20 text-center text-gray-400 text-sm">Loading ideas...</div>
+          ) : data.length === 0 ? (
+             <div className="col-span-full py-20 text-center text-gray-400 text-sm">No ideas found.</div>
           ) : (
-            data.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col">
-                <div className="relative aspect-[4/3] w-full bg-gray-200">
-                  {/* Lazy loading diaktifkan */}
+            data?.map((item) => (
+              <div key={item.id} className="bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] transition-shadow duration-300">
+                <div className="relative aspect-[4/3] w-full bg-gray-100">
                   <img
-                    src={item.medium_image?.[0]?.url || 'https://via.placeholder.com/300'}
+                    src={item.medium_image?.[0]?.url || 'https://via.placeholder.com/400x300'}
                     alt={item.title}
                     loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="p-4 flex flex-col flex-grow">
-                  <p className="text-xs text-gray-400 mb-2 uppercase">{formatDate(item.published_at)}</p>
-                  {/* Title clamp maksimal 3 baris */}
-                  <h3 className="text-md font-semibold text-gray-800 line-clamp-3">
+                <div className="p-5 flex flex-col flex-grow">
+                  <p className="text-[11px] font-semibold text-gray-400 tracking-wide mb-2 uppercase">
+                    {formatDate(item.published_at)}
+                  </p>
+                  <h3 className="text-sm font-bold text-gray-800 leading-snug line-clamp-3">
                     {item.title}
                   </h3>
                 </div>
@@ -117,35 +130,52 @@ export default function IdeasPage() {
           )}
         </div>
 
-        {/* Pagination */}
-        {meta && (
-          <div className="flex justify-center mt-12 space-x-2">
+        {meta && meta.last_page > 1 && (
+          <div className="flex justify-center items-center mt-16 space-x-1 text-sm font-medium text-gray-600">
             <button
                disabled={page === 1}
-               onClick={() => setPage(page - 1)}
-               className="p-2 disabled:opacity-50"
+               onClick={() => setPage(1)}
+               className="p-2 hover:text-[#ff6600] disabled:opacity-30 transition-colors"
             >
               &laquo;
             </button>
-            {/* Simple pagination display for demo */}
+            <button
+               disabled={page === 1}
+               onClick={() => setPage(page - 1)}
+               className="p-2 hover:text-[#ff6600] disabled:opacity-30 transition-colors mr-2"
+            >
+              &lsaquo;
+            </button>
+            
             {[...Array(meta.last_page)].map((_, i) => {
               const pageNum = i + 1;
-              // Membatasi tombol yang tampil agar tidak terlalu panjang
               if (pageNum < page - 2 || pageNum > page + 2) return null;
               return (
                 <button
                   key={pageNum}
                   onClick={() => setPage(pageNum)}
-                  className={`px-3 py-1 rounded ${page === pageNum ? 'bg-[#ff6600] text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`w-8 h-8 flex items-center justify-center rounded-md transition-all ${
+                    page === pageNum 
+                      ? 'bg-[#ff6600] text-white font-bold shadow-sm shadow-[#ff6600]/30' 
+                      : 'hover:bg-gray-100 text-gray-700'
+                  }`}
                 >
                   {pageNum}
                 </button>
               );
             })}
+
             <button
                disabled={page === meta.last_page}
                onClick={() => setPage(page + 1)}
-               className="p-2 disabled:opacity-50"
+               className="p-2 hover:text-[#ff6600] disabled:opacity-30 transition-colors ml-2"
+            >
+              &rsaquo;
+            </button>
+            <button
+               disabled={page === meta.last_page}
+               onClick={() => setPage(meta.last_page)}
+               className="p-2 hover:text-[#ff6600] disabled:opacity-30 transition-colors"
             >
               &raquo;
             </button>
