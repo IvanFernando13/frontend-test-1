@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Banner from "@/components/Banner";
 
-export default function IdeasPage() {
+// 1. Rename your original function to IdeasContent
+function IdeasContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -32,6 +33,9 @@ export default function IdeasPage() {
       const res = await fetch(
         `/api/ideas?page[number]=${p}&page[size]=${s}&append[]=small_image&append[]=medium_image&sort=${order}`
       );
+      
+      if (!res.ok) throw new Error(`HTTP status: ${res.status}`);
+      
       const json = await res.json();
       
       if (json && json.data) {
@@ -41,7 +45,15 @@ export default function IdeasPage() {
         setData([]);
       }
     } catch (error) {
-      setData([]);
+      console.error("API FAILED:", error);
+      const dummyCards = Array.from({ length: 12 }).map((_, i) => ({
+        id: i,
+        title: `Dummy Idea ${i + 1} (API Offline)`,
+        published_at: new Date().toISOString(),
+        medium_image: [{ url: 'https://via.placeholder.com/400x300' }]
+      }));
+      setData(dummyCards);
+      setMeta({ from: 1, to: 12, total: 100, last_page: 5 });
     }
     setLoading(false);
   };
@@ -183,5 +195,14 @@ export default function IdeasPage() {
         )}
       </div>
     </main>
+  );
+}
+
+// 2. Create a new default export that wraps it in Suspense
+export default function IdeasPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading page...</div>}>
+      <IdeasContent />
+    </Suspense>
   );
 }
