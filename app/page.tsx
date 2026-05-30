@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Banner from "@/components/Banner";
 
-// 1. Rename your original function to IdeasContent
+
 function IdeasContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -198,7 +198,7 @@ function IdeasContent() {
   );
 }
 
-// 2. Create a new default export that wraps it in Suspense
+
 export default function IdeasPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading page...</div>}>
